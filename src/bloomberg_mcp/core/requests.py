@@ -51,6 +51,58 @@ QUERY = blpapi.Name("query")
 MAX_RESULTS = blpapi.Name("maxResults")
 YELLOW_KEY_FILTER = blpapi.Name("yellowKeyFilter")
 
+# blpapi's instrumentListRequest expects the schema constant names
+# (YK_FILTER_CORP, ...), not the friendly yellow-key labels users think in.
+# Passing "Corp" raises: Constant with value 'Corp' does not exist. (0x0006000d)
+YELLOW_KEY_FILTERS = {
+    "none": "YK_FILTER_NONE",
+    "cmdt": "YK_FILTER_CMDT",
+    "comdty": "YK_FILTER_CMDT",
+    "commodity": "YK_FILTER_CMDT",
+    "eqty": "YK_FILTER_EQTY",
+    "equity": "YK_FILTER_EQTY",
+    "muni": "YK_FILTER_MUNI",
+    "municipal": "YK_FILTER_MUNI",
+    "prfd": "YK_FILTER_PRFD",
+    "pfd": "YK_FILTER_PRFD",
+    "preferred": "YK_FILTER_PRFD",
+    "clnt": "YK_FILTER_CLNT",
+    "client": "YK_FILTER_CLNT",
+    "mmkt": "YK_FILTER_MMKT",
+    "m-mkt": "YK_FILTER_MMKT",
+    "govt": "YK_FILTER_GOVT",
+    "government": "YK_FILTER_GOVT",
+    "corp": "YK_FILTER_CORP",
+    "corporate": "YK_FILTER_CORP",
+    "indx": "YK_FILTER_INDX",
+    "index": "YK_FILTER_INDX",
+    "curr": "YK_FILTER_CURR",
+    "curncy": "YK_FILTER_CURR",
+    "currency": "YK_FILTER_CURR",
+    "mtge": "YK_FILTER_MTGE",
+    "mortgage": "YK_FILTER_MTGE",
+}
+
+
+def resolve_yellow_key(yellow_key: str) -> str:
+    """Map a friendly yellow-key label to its blpapi schema constant.
+
+    Accepts either form, so "Corp", "corp" and "YK_FILTER_CORP" all work.
+
+    Raises:
+        ValueError: if the label is not a recognised yellow key.
+    """
+    key = yellow_key.strip()
+    if key.upper().startswith("YK_FILTER_"):
+        return key.upper()
+    try:
+        return YELLOW_KEY_FILTERS[key.lower()]
+    except KeyError:
+        valid = sorted({v.removeprefix("YK_FILTER_").title() for v in YELLOW_KEY_FILTERS.values()})
+        raise ValueError(
+            f"Unknown yellow_key {yellow_key!r}. Valid values: {', '.join(valid)}"
+        ) from None
+
 # Field Search Request Names
 SEARCH_SPEC = blpapi.Name("searchSpec")
 FIELD_TYPE = blpapi.Name("fieldType")
@@ -319,7 +371,9 @@ def build_instrument_search_request(
         service: The opened //blp/instruments service
         query: Search query string (e.g., "IBM", "Apple", "US Treasury")
         max_results: Maximum number of results to return (default: 10)
-        yellow_key: Optional market sector filter - one of:
+        yellow_key: Optional market sector filter. Friendly labels are
+            mapped to their blpapi constants by resolve_yellow_key(), so
+            either form works - one of:
             "Govt" - Government
             "Corp" - Corporate
             "Mtge" - Mortgage
@@ -330,6 +384,7 @@ def build_instrument_search_request(
             "Comdty" - Commodity
             "Index" - Index
             "Curncy" - Currency
+            "Client" - Client
 
     Returns:
         A configured blpapi.Request object ready to send
@@ -351,7 +406,7 @@ def build_instrument_search_request(
     }
 
     if yellow_key is not None:
-        request_dict[YELLOW_KEY_FILTER] = yellow_key
+        request_dict[YELLOW_KEY_FILTER] = resolve_yellow_key(yellow_key)
 
     request.fromPy(request_dict)
     return request
