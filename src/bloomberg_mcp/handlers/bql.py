@@ -83,6 +83,19 @@ async def bloomberg_run_bql(params: BQLInput) -> str:
 
             parsed = _parse_bql_results(raw_results)
 
+            # Never present an error-only response as "no data" - the caller
+            # cannot tell an unentitled service from a genuinely empty result.
+            if parsed["errors"] and not parsed["records"]:
+                joined = "; ".join(parsed["errors"])
+                hint = ""
+                if "not authorized" in joined.lower():
+                    hint = (
+                        " This Terminal is not entitled for BQL - contact your "
+                        "Bloomberg representative. Use bloomberg_get_reference_data, "
+                        "bloomberg_get_bulk_data or bloomberg_dynamic_screen instead."
+                    )
+                return f"BQL query failed: {joined}.{hint}"
+
             if params.response_format == ResponseFormat.MARKDOWN:
                 lines = [
                     "## BQL Query Results",
@@ -131,20 +144,45 @@ async def bloomberg_run_bql(params: BQLInput) -> str:
 
 
 def _parse_bql_results(raw_results: list) -> dict:
-    """Parse raw BQL toPy() results into a structured format."""
+    """Parse raw BQL toPy() results into a structured format.
+
+    //blp/bqlsvc answers a sendQuery with a message whose sole payload is a
+    JSON *string* (not a nested blpapi element tree), so msg.toPy() yields a
+    str. Errors - including "User not authorized to use BQL" - arrive inside
+    that JSON under "responseExceptions". Decode the string first, otherwise
+    every failure is indistinguishable from an empty result set.
+    """
     records = []
     errors = []
     columns = set()
 
     for msg_data in raw_results:
+        # bqlsvc payload: a JSON string. Decode before inspecting.
+        if isinstance(msg_data, str):
+            try:
+                msg_data = json.loads(msg_data)
+            except json.JSONDecodeError:
+                errors.append(f"Unparseable BQL response: {msg_data[:200]}")
+                continue
+
         if not isinstance(msg_data, dict):
+            errors.append(f"Unexpected BQL response type {type(msg_data).__name__}")
             continue
 
         if "responseError" in msg_data:
             errors.append(str(msg_data["responseError"]))
             continue
 
-        results = msg_data.get("results", msg_data)
+        # bqlsvc reports entitlement and query errors here.
+        for exc in msg_data.get("responseExceptions") or []:
+            if isinstance(exc, dict):
+                errors.append(str(exc.get("message") or exc))
+            else:
+                errors.append(str(exc))
+
+        results = msg_data.get("results")
+        if results is None:
+            continue
 
         if isinstance(results, list):
             for item in results:

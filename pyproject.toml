@@ -29,7 +29,9 @@ classifiers = [
 # Pre-built wheels available since 3.19.0; for older platforms,
 # set BLPAPI_ROOT to the C++ SDK path before installing.
 dependencies = [
-    "mcp>=1.8.0",
+    # mcp 2.x renamed FastMCP -> MCPServer and moved mcp.server.fastmcp;
+    # this codebase targets the v1 API, so cap below 2.0.
+    "mcp>=1.8.0,<2",
     "pydantic>=2.0.0",
     "uvicorn>=0.20.0",
 ]
