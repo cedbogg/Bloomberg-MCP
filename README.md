@@ -433,26 +433,46 @@ graph TB
 ### Setup
 
 ```bash
-# 1. Install Bloomberg Python SDK
-pip install blpapi
-
-# 2. Install bloomberg-mcp
+# 1. Clone and enter the repo
 git clone https://github.com/QmQsun/Bloomberg-MCP.git
 cd Bloomberg-MCP
-pip install .            # standard install
-# or: pip install -e .   # editable mode (for development)
+
+# 2. Create a virtual environment named "venv"
+#    (run_server.ps1 / run_server.bat auto-activate this exact path)
+python -m venv venv
+
+# 3. Install the Bloomberg Python SDK from Bloomberg's own package index.
+#    blpapi is NOT published to public PyPI - see the note below.
+python -m pip install \
+  --index-url=https://blpapi.bloomberg.com/repository/releases/python/simple/ \
+  blpapi
+
+# 4. Install bloomberg-mcp
+python -m pip install .          # standard install
+# or: python -m pip install -e ".[dev]"   # editable + test tooling
 ```
 
-> **Note**: `blpapi` 3.19.0+ ships pre-built wheels — `pip install blpapi` works directly
-> on Windows, macOS, and Linux without additional setup.
+> **`blpapi` is not on public PyPI.** A plain `pip install blpapi` fails with
+> `ERROR: Could not find a version that satisfies the requirement blpapi
+> (from versions: none)`. It is served only from Bloomberg's own index, hence the
+> `--index-url` above. Prebuilt wheels are available there (3.26.x at time of
+> writing), so no C++ SDK and no `BLPAPI_ROOT` is required on current platforms.
 >
-> If `pip install blpapi` fails (older platforms or Python versions), install via the C++ SDK:
+> If you are on an old platform with no matching wheel, install the C++ SDK and
+> point `BLPAPI_ROOT` at it before re-running the command above:
 > ```bash
-> # Set Bloomberg C++ SDK path
 > export BLPAPI_ROOT=/path/to/blpapi_cpp_3.x.x.x   # Linux/macOS
 > set BLPAPI_ROOT=C:\blp\blpapi_cpp_3.x.x.x         # Windows
-> pip install blpapi
 > ```
+
+> **`mcp` must stay on 1.x.** `pyproject.toml` pins `mcp>=1.8.0,<2` because mcp 2.x
+> renamed `FastMCP` to `MCPServer` and removed `mcp.server.fastmcp`. If you see
+> `ModuleNotFoundError: No module named 'mcp.server.fastmcp'`, an unpinned install
+> has pulled 2.x - run `pip install "mcp<2"`.
+
+> **Don't put the repo in a synced folder.** OneDrive, Dropbox and iCloud corrupt
+> virtual environments, and a Windows venv bakes absolute paths into `Scripts\*.exe`
+> so it cannot be moved or copied - it must be rebuilt in place.
 
 ### Configure Claude Code
 
