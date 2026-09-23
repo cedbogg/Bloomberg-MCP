@@ -69,7 +69,6 @@ def validate_reference_response(
     for sec_data in data:
         security = getattr(sec_data, "security", "unknown")
         fields = getattr(sec_data, "fields", {})
-        errors = getattr(sec_data, "errors", [])
 
         # Check 1: All fields empty
         if not fields or all(v is None for v in fields.values()):
@@ -94,6 +93,8 @@ def validate_reference_response(
                     security=security,
                 )
                 warnings.append(w)
+                if hasattr(sec_data, "errors"):
+                    sec_data.errors.append(str(w))
 
         # Check 3: High None ratio (> 50% of fields are None)
         none_count = sum(1 for v in fields.values() if v is None)
@@ -104,6 +105,8 @@ def validate_reference_response(
                 security=security,
             )
             warnings.append(w)
+            if hasattr(sec_data, "errors"):
+                sec_data.errors.append(str(w))
 
     return warnings
 

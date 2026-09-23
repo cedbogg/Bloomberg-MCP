@@ -486,6 +486,50 @@ class FieldSets:
         "BEST_EST_LONG_TERM_GROWTH",
     ])
 
+    # Credit / fixed income — the BOND_* and CREDIT_FULL sets apply to bond
+    # identifiers (e.g. "XS1234567890 Corp"), not equity tickers. CREDIT_ISSUER
+    # is the exception: point it at the issuer ticker. Verify mnemonics with
+    # FLDS <GO> — bond field availability varies by instrument and data licence.
+    BOND_PRICING = FieldSet("bond_pricing", [
+        "PX_BID", "PX_ASK", "PX_MID", "PX_LAST",
+        "YLD_YTM_MID", "YLD_CNV_MID",
+    ])
+
+    BOND_SPREADS = FieldSet("bond_spreads", [
+        "Z_SPRD_MID", "OAS_SPREAD_MID", "I_SPRD_MID", "ASSET_SWAP_SPD_MID",
+    ])
+
+    BOND_RISK = FieldSet("bond_risk", [
+        "DUR_ADJ_MID", "DUR_MID", "CNVX_MID", "RISK_MID",
+    ])
+
+    BOND_RATINGS = FieldSet("bond_ratings", [
+        "RTG_SP", "RTG_MOODY", "RTG_FITCH", "BB_COMPOSITE",
+    ])
+
+    BOND_STRUCTURE = FieldSet("bond_structure", [
+        "SECURITY_NAME", "ISSUER", "ID_ISIN", "CRNCY",
+        "CPN", "CPN_TYP", "CPN_FREQ",
+        "MATURITY", "MTY_TYP", "ISSUE_DT",
+        "AMT_OUTSTANDING", "AMT_ISSUED",
+        "PAYMENT_RANK", "COLLAT_TYP",
+        "CALLABLE", "NXT_CALL_DT", "NXT_CALL_PX",
+    ])
+
+    CREDIT_ISSUER = FieldSet("credit_issuer", [
+        "TOT_DEBT_TO_EBITDA", "NET_DEBT_TO_EBITDA", "NET_DEBT", "EBITDA",
+        "INTEREST_COVERAGE_RATIO", "BS_CASH_NEAR_CASH_ITEM",
+        "CF_FREE_CASH_FLOW", "TOT_DEBT_TO_TOT_EQY",
+    ])
+
+    CREDIT_FULL = FieldSet("credit_full", [
+        "SECURITY_NAME", "ISSUER", "ID_ISIN", "CRNCY", "CPN", "MATURITY",
+        "PAYMENT_RANK", "AMT_OUTSTANDING", "NXT_CALL_DT", "NXT_CALL_PX",
+        "PX_BID", "PX_ASK", "PX_MID", "YLD_YTM_MID", "YLD_CNV_MID",
+        "Z_SPRD_MID", "OAS_SPREAD_MID", "I_SPRD_MID", "ASSET_SWAP_SPD_MID",
+        "DUR_ADJ_MID", "RTG_SP", "RTG_MOODY", "RTG_FITCH", "BB_COMPOSITE",
+    ])
+
 
 # =============================================================================
 # NAMED UNIVERSES - Pre-defined security lists for common screening use cases
