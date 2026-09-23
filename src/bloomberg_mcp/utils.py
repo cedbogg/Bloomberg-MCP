@@ -53,6 +53,14 @@ def _get_fieldset_map():
         "VALUATION_EXTENDED": FieldSets.VALUATION_EXTENDED,
         "EARNINGS_SURPRISE": FieldSets.EARNINGS_SURPRISE,
         "GROWTH": FieldSets.GROWTH,
+        # Credit / fixed income FieldSets
+        "BOND_PRICING": FieldSets.BOND_PRICING,
+        "BOND_SPREADS": FieldSets.BOND_SPREADS,
+        "BOND_RISK": FieldSets.BOND_RISK,
+        "BOND_RATINGS": FieldSets.BOND_RATINGS,
+        "BOND_STRUCTURE": FieldSets.BOND_STRUCTURE,
+        "CREDIT_ISSUER": FieldSets.CREDIT_ISSUER,
+        "CREDIT_FULL": FieldSets.CREDIT_FULL,
     }
 
     # Try YAML overlay — adds new FieldSets or overrides existing ones
@@ -62,9 +70,8 @@ def _get_fieldset_map():
 
         yaml_fieldsets = load_fieldsets_yaml()
         for name, fields in yaml_fieldsets.items():
-            if name not in code_map:
-                # New FieldSet from YAML only
-                code_map[name] = FieldSet(name.lower(), tuple(fields))
+            # YAML wins over code-defined FieldSets, per fieldsets.yaml's header
+            code_map[name] = FieldSet(name.lower(), tuple(fields))
     except Exception:
         pass  # YAML overlay is best-effort
 
